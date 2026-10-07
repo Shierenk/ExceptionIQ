@@ -1,0 +1,3 @@
+import { NextResponse } from 'next/server'; import {readDB,writeDB,audit} from '@/lib/db';
+export async function GET(){const db=await readDB(); return NextResponse.json(db.exceptions);}
+export async function POST(req:Request){const body=await req.json(); const db=await readDB(); const id=`EX-${Math.floor(2000+Math.random()*7999)}`; const item={...body,id,createdAt:new Date().toISOString(),status:'Open',confidence:0,evidence:[],resolutionPr:`PR-${id.slice(3)}`}; db.exceptions.unshift(item); db.audit.unshift(audit('Exception created',id)); await writeDB(db); return NextResponse.json(item,{status:201});}

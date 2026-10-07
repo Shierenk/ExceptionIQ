@@ -1,0 +1,1 @@
+{"name":"exceptioniq-backend","private":true,"version":"1.0.0","scripts":{"dev":"next dev -p 3001","build":"next build","start":"next start -p 3001"},"dependencies":{"exceptioniq":"file:..","next":"^15.5.4","react":"^19.1.1","react-dom":"^19.1.1","typescript":"^5.9.2"},"devDependencies":{"@types/node":"20.17.6","@types/react":"19.3.0"}}

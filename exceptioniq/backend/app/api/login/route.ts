@@ -1,0 +1,1 @@
+import {NextResponse} from 'next/server'; export async function POST(req:Request){const b=await req.json(); if(!b.email||!b.password)return NextResponse.json({error:'Email and password required'},{status:400}); return NextResponse.json({user:{name:'Finance Analyst',email:b.email,role:'AP Operations'}});}

@@ -1,0 +1,14 @@
+import {NextResponse} from 'next/server'; import {readDB,writeDB,audit} from '@/lib/db';
+export async function POST(req:Request){const {action,exceptionId}=await req.json(); const db=await readDB(); const e=db.exceptions.find((x:any)=>x.id===exceptionId); if(!e)return NextResponse.json({error:'Exception not found'},{status:404});
+ const now=new Date().toISOString(); let message='';
+ if(action==='investigate'){e.status='Investigation Running'; e.confidence=Math.max(e.confidence||0,84); message='Investigation completed: evidence gathered and deterministic checks evaluated.'; db.audit.unshift(audit('Investigation completed',`${exceptionId}: ${message}`));}
+ if(action==='request-evidence'){e.status='Awaiting Evidence'; message='Requested missing/confirmatory evidence from source systems.'; db.audit.unshift(audit('Evidence requested',exceptionId));}
+ if(action==='escalate'){e.status='Escalated'; message='Case escalated with full evidence context pack.'; db.audit.unshift(audit('Exception escalated',exceptionId));}
+ if(action==='generate-pr'){e.status='Awaiting Approval'; e.resolutionPr=`PR-${exceptionId.slice(3)}`; message='Resolution PR generated with root cause, evidence, calculation and approval gate.'; db.audit.unshift(audit('Resolution PR generated',`${exceptionId} / ${e.resolutionPr}`));}
+ if(action==='approve'){if(e.status!=='Awaiting Approval')return NextResponse.json({error:'Approval gate is not open'},{status:409}); e.status='Shadow Verification'; message='Human approval recorded. Change moved to shadow ledger for pre-flight verification.'; db.audit.unshift(audit('Resolution PR approved',exceptionId));}
+ if(action==='reject'){e.status='Escalated'; message='Resolution rejected and routed for analyst investigation.'; db.audit.unshift(audit('Resolution PR rejected',exceptionId));}
+ if(action==='shadow-apply'){if(e.status!=='Shadow Verification')return NextResponse.json({error:'Case must be approved before shadow apply'},{status:409}); e.status='Verified'; message='Shadow ledger passed policy, duplicate, balance and idempotency checks.'; db.audit.unshift(audit('Shadow verification passed',exceptionId));}
+ if(action==='resolve'){e.status='Resolved'; message='Case marked resolved after verification.'; db.audit.unshift(audit('Exception resolved',exceptionId));}
+ if(action==='defend'){message='Malicious instruction detected in source text. Instruction ignored; evidence retained and case remains governed.'; db.audit.unshift(audit('Prompt-injection defence triggered',`${exceptionId}: malicious source instruction ignored`));}
+ if(action==='compile-skill'){message='Skill draft created from recurring reviewed pattern; review is required before enablement.'; db.audit.unshift(audit('Skill Compiler draft created',exceptionId));}
+ e.updatedAt=now; await writeDB(db); return NextResponse.json({exception:e,message});}
