@@ -1,368 +1,450 @@
 {
-    "exceptions": [
-        {
-            "id": "EX-2401",
-            "vendor": "Apex Industrial Supplies",
-            "type": "Payment vs Invoice",
-            "invoiceId": "INV-10481",
-            "paymentId": "PAY-88321",
-            "poId": "PO-70041",
-            "grnId": "GRN-55102",
-            "contractId": "CON-2209",
-            "amount": 2000,
-            "currency": "INR",
-            "risk": "Medium",
-            "status": "Awaiting Approval",
-            "confidence": 96,
-            "rootCause": "Valid 2% early-payment discount was applied within the contractual window.",
-            "createdAt": "2026-10-04T08:42:00Z",
-            "owner": "Priya N.",
-            "evidence": ["INV-10481", "PAY-88321", "CON-2209", "APP-7741"],
-            "resolutionPr": "PR-2401"
-        },
-        {
-            "id": "EX-2402",
-            "vendor": "Northstar Components",
-            "type": "Invoice vs PO / GRN",
-            "invoiceId": "INV-10492",
-            "paymentId": "PAY-88344",
-            "poId": "PO-70055",
-            "grnId": "GRN-55119",
-            "contractId": "CON-2215",
-            "amount": 10000,
-            "currency": "INR",
-            "risk": "High",
-            "status": "Escalated",
-            "confidence": 62,
-            "rootCause": "GRN quantity is lower than invoice quantity and amendment history conflicts.",
-            "createdAt": "2026-10-04T09:15:00Z",
-            "owner": "Arun K.",
-            "evidence": ["INV-10492", "PO-70055", "GRN-55119", "CON-2215"],
-            "resolutionPr": "PR-2402"
-        },
-        {
-            "id": "EX-2403",
-            "vendor": "BluePeak Logistics",
-            "type": "Duplicate / Suspicious",
-            "invoiceId": "INV-10501",
-            "paymentId": "PAY-88371",
-            "poId": "PO-70061",
-            "grnId": "GRN-55128",
-            "contractId": "CON-2221",
-            "amount": 75000,
-            "currency": "INR",
-            "risk": "Critical",
-            "status": "Open",
-            "confidence": 88,
-            "rootCause": "Potential duplicate invoice detected across document number and amount similarity.",
-            "createdAt": "2026-10-04T10:02:00Z",
-            "owner": "Meera S.",
-            "evidence": ["INV-10501", "PAY-88371", "PO-70061", "GRN-55128"],
-            "resolutionPr": "PR-2403"
-        },
-        {
-            "id": "EX-2404",
-            "vendor": "Orion Foods Pvt Ltd",
-            "type": "Payment vs Invoice",
-            "invoiceId": "INV-10513",
-            "paymentId": "PAY-88403",
-            "poId": "PO-70072",
-            "grnId": "GRN-55141",
-            "contractId": "CON-2230",
-            "amount": 1200,
-            "currency": "INR",
-            "risk": "Low",
-            "status": "Resolved",
-            "confidence": 99,
-            "rootCause": "Bank fee was excluded from the remittance amount per approved policy.",
-            "createdAt": "2026-10-03T07:30:00Z",
-            "owner": "Priya N.",
-            "evidence": ["INV-10513", "PAY-88403", "CON-2230"],
-            "resolutionPr": "PR-2404"
-        },
-        {
-            "id": "EX-2405",
-            "vendor": "Vertex Office Systems",
-            "type": "Invoice vs PO / GRN",
-            "invoiceId": "INV-10518",
-            "paymentId": "PAY-88422",
-            "poId": "PO-70081",
-            "grnId": "GRN-55152",
-            "contractId": "CON-2238",
-            "amount": 5000,
-            "currency": "INR",
-            "risk": "Medium",
-            "status": "Investigation Running",
-            "confidence": 81,
-            "rootCause": "Unit price on invoice differs from latest PO amendment.",
-            "createdAt": "2026-10-04T11:22:00Z",
-            "owner": "Arun K.",
-            "evidence": ["INV-10518", "PO-70081", "GRN-55152", "CON-2238"],
-            "resolutionPr": "PR-2405"
-        },
-        {
-            "id": "EX-2406",
-            "vendor": "Zenith Medical Supplies",
-            "type": "Duplicate / Suspicious",
-            "invoiceId": "INV-10527",
-            "paymentId": "PAY-88451",
-            "poId": "PO-70088",
-            "grnId": "GRN-55163",
-            "contractId": "CON-2244",
-            "amount": 32000,
-            "currency": "INR",
-            "risk": "High",
-            "status": "Open",
-            "confidence": 74,
-            "rootCause": "Same supplier, amount and line-item fingerprint found in a prior paid invoice.",
-            "createdAt": "2026-10-04T12:05:00Z",
-            "owner": "Meera S.",
-            "evidence": ["INV-10527", "PAY-88451", "PO-70088", "GRN-55163"],
-            "resolutionPr": "PR-2406"
-        }
-    ],
-    "records": [
-        {
-            "id": "INV-10481",
-            "kind": "Invoice",
-            "vendor": "Apex Industrial Supplies",
-            "amount": 100000,
-            "currency": "INR",
-            "status": "Posted",
-            "date": "2026-09-28",
-            "summary": "Industrial bearings — 200 units @ ₹500",
-            "related": ["PAY-88321", "PO-70041", "GRN-55102", "CON-2209"]
-        },
-        {
-            "id": "PAY-88321",
-            "kind": "Payment",
-            "vendor": "Apex Industrial Supplies",
-            "amount": 98000,
-            "currency": "INR",
-            "status": "Settled",
-            "date": "2026-10-01",
-            "summary": "98% remittance; 2% early-pay discount",
-            "related": ["INV-10481", "CON-2209"]
-        },
-        {
-            "id": "PO-70041",
-            "kind": "Purchase Order",
-            "vendor": "Apex Industrial Supplies",
-            "amount": 100000,
-            "currency": "INR",
-            "status": "Approved",
-            "date": "2026-09-20",
-            "summary": "200 units at ₹500",
-            "related": ["INV-10481", "GRN-55102"]
-        },
-        {
-            "id": "GRN-55102",
-            "kind": "GRN",
-            "vendor": "Apex Industrial Supplies",
-            "amount": 100000,
-            "currency": "INR",
-            "status": "Received",
-            "date": "2026-09-26",
-            "summary": "200 units received",
-            "related": ["PO-70041", "INV-10481"]
-        },
-        {
-            "id": "CON-2209",
-            "kind": "Contract",
-            "vendor": "Apex Industrial Supplies",
-            "amount": 0,
-            "currency": "INR",
-            "status": "Active",
-            "date": "2026-01-01",
-            "summary": "2% early-payment discount if settled within 10 days",
-            "related": ["INV-10481", "PAY-88321"]
-        },
-        {
-            "id": "APP-7741",
-            "kind": "Approval",
-            "vendor": "Apex Industrial Supplies",
-            "amount": 100000,
-            "currency": "INR",
-            "status": "Approved",
-            "date": "2026-09-29",
-            "summary": "Discount eligibility approval",
-            "related": ["INV-10481", "CON-2209"]
-        },
-        {
-            "id": "INV-10492",
-            "kind": "Invoice",
-            "vendor": "Northstar Components",
-            "amount": 210000,
-            "currency": "INR",
-            "status": "Posted",
-            "date": "2026-10-01",
-            "summary": "4,200 units @ ₹50",
-            "related": ["PO-70055", "GRN-55119"]
-        },
-        {
-            "id": "PO-70055",
-            "kind": "Purchase Order",
-            "vendor": "Northstar Components",
-            "amount": 200000,
-            "currency": "INR",
-            "status": "Amended",
-            "date": "2026-09-18",
-            "summary": "Original 4,000 units; amendment under review",
-            "related": ["INV-10492", "GRN-55119"]
-        },
-        {
-            "id": "GRN-55119",
-            "kind": "GRN",
-            "vendor": "Northstar Components",
-            "amount": 200000,
-            "currency": "INR",
-            "status": "Partial Receipt",
-            "date": "2026-09-30",
-            "summary": "4,000 units received",
-            "related": ["INV-10492", "PO-70055"]
-        },
-        {
-            "id": "CON-2215",
-            "kind": "Contract",
-            "vendor": "Northstar Components",
-            "amount": 0,
-            "currency": "INR",
-            "status": "Active",
-            "date": "2026-01-12",
-            "summary": "Short shipment credit terms apply after confirmed shortage",
-            "related": ["PO-70055", "GRN-55119"]
-        },
-        {
-            "id": "INV-10501",
-            "kind": "Invoice",
-            "vendor": "BluePeak Logistics",
-            "amount": 75000,
-            "currency": "INR",
-            "status": "Posted",
-            "date": "2026-10-02",
-            "summary": "Freight services — invoice fingerprint matches prior document",
-            "related": ["PAY-88371", "PO-70061"]
-        },
-        {
-            "id": "PAY-88371",
-            "kind": "Payment",
-            "vendor": "BluePeak Logistics",
-            "amount": 75000,
-            "currency": "INR",
-            "status": "Pending",
-            "date": "2026-10-03",
-            "summary": "Payment held pending duplicate review",
-            "related": ["INV-10501"]
-        }
-    ],
-    "policies": [
-        {
-            "id": "POL-01",
-            "name": "Early Payment Discount",
-            "condition": "Discount <= 2% and settlement within contractual window",
-            "approval": "Required",
-            "risk": "Medium",
-            "status": "Active",
-            "version": "v3.2"
-        },
-        {
-            "id": "POL-02",
-            "name": "Short Shipment Credit",
-            "condition": "GRN shortage confirmed and no conflicting PO amendment",
-            "approval": "Required",
-            "risk": "High",
-            "status": "Active",
-            "version": "v2.1"
-        },
-        {
-            "id": "POL-03",
-            "name": "Duplicate Payment Prevention",
-            "condition": "Block if duplicate fingerprint or same obligation is already paid",
-            "approval": "Required",
-            "risk": "Critical",
-            "status": "Active",
-            "version": "v4.0"
-        },
-        {
-            "id": "POL-04",
-            "name": "Evidence Sufficiency",
-            "condition": "All required source records must be present before action",
-            "approval": "System gate",
-            "risk": "High",
-            "status": "Active",
-            "version": "v1.4"
-        }
-    ],
-    "skills": [
-        {
-            "id": "SK-01",
-            "name": "Contract-backed short payment",
-            "type": "Payment vs Invoice",
-            "version": "1.3.0",
-            "status": "Enabled",
-            "success": 27,
-            "required": "Invoice, payment, contract, approval"
-        },
-        {
-            "id": "SK-02",
-            "name": "Short shipment investigation",
-            "type": "Invoice vs PO / GRN",
-            "version": "0.9.0",
-            "status": "Review",
-            "success": 8,
-            "required": "Invoice, PO, GRN, amendment history"
-        },
-        {
-            "id": "SK-03",
-            "name": "Duplicate obligation check",
-            "type": "Duplicate / Suspicious",
-            "version": "2.0.0",
-            "status": "Enabled",
-            "success": 41,
-            "required": "Invoice, payment, prior invoices"
-        }
-    ],
-    "tools": [
-        {
-            "id": "TOOL-01",
-            "name": "ERP Invoice Reader",
-            "system": "ERP",
-            "type": "Read",
-            "access": "Read-only",
-            "status": "Healthy"
-        },
-        {
-            "id": "TOOL-02",
-            "name": "Bank Payment Reader",
-            "system": "Bank",
-            "type": "Read",
-            "access": "Read-only",
-            "status": "Healthy"
-        },
-        {
-            "id": "TOOL-03",
-            "name": "Contract Repository",
-            "system": "CLM",
-            "type": "Read",
-            "access": "Read-only",
-            "status": "Healthy"
-        },
-        {
-            "id": "TOOL-04",
-            "name": "Approval Service",
-            "system": "Workflow",
-            "type": "Read",
-            "access": "Read-only",
-            "status": "Healthy"
-        },
-        {
-            "id": "TOOL-05",
-            "name": "Shadow Ledger",
-            "system": "ExceptionIQ",
-            "type": "Write",
-            "access": "Sandbox only",
-            "status": "Healthy"
-        }
-    ],
-    "audit": []
+  "exceptions": [
+    {
+      "id": "EX-2401",
+      "vendor": "Apex Industrial Supplies",
+      "type": "Payment vs Invoice",
+      "invoiceId": "INV-10481",
+      "paymentId": "PAY-88321",
+      "poId": "PO-70041",
+      "grnId": "GRN-55102",
+      "contractId": "CON-2209",
+      "amount": 2000,
+      "currency": "INR",
+      "risk": "Medium",
+      "status": "Awaiting Approval",
+      "confidence": 96,
+      "rootCause": "Valid 2% early-payment discount was applied within the contractual window.",
+      "createdAt": "2026-10-04T08:42:00Z",
+      "owner": "Priya N.",
+      "evidence": [
+        "INV-10481",
+        "PAY-88321",
+        "CON-2209",
+        "APP-7741"
+      ],
+      "resolutionPr": "PR-2401"
+    },
+    {
+      "id": "EX-2402",
+      "vendor": "Northstar Components",
+      "type": "Invoice vs PO / GRN",
+      "invoiceId": "INV-10492",
+      "paymentId": "PAY-88344",
+      "poId": "PO-70055",
+      "grnId": "GRN-55119",
+      "contractId": "CON-2215",
+      "amount": 10000,
+      "currency": "INR",
+      "risk": "High",
+      "status": "Awaiting Approval",
+      "confidence": 84,
+      "rootCause": "GRN quantity is lower than invoice quantity and amendment history conflicts.",
+      "createdAt": "2026-10-04T09:15:00Z",
+      "owner": "Arun K.",
+      "evidence": [
+        "INV-10492",
+        "PO-70055",
+        "GRN-55119",
+        "CON-2215"
+      ],
+      "resolutionPr": "PR-2402",
+      "updatedAt": "2026-10-09T07:45:16.145Z"
+    },
+    {
+      "id": "EX-2403",
+      "vendor": "BluePeak Logistics",
+      "type": "Duplicate / Suspicious",
+      "invoiceId": "INV-10501",
+      "paymentId": "PAY-88371",
+      "poId": "PO-70061",
+      "grnId": "GRN-55128",
+      "contractId": "CON-2221",
+      "amount": 75000,
+      "currency": "INR",
+      "risk": "Critical",
+      "status": "Open",
+      "confidence": 88,
+      "rootCause": "Potential duplicate invoice detected across document number and amount similarity.",
+      "createdAt": "2026-10-04T10:02:00Z",
+      "owner": "Meera S.",
+      "evidence": [
+        "INV-10501",
+        "PAY-88371",
+        "PO-70061",
+        "GRN-55128"
+      ],
+      "resolutionPr": "PR-2403"
+    },
+    {
+      "id": "EX-2404",
+      "vendor": "Orion Foods Pvt Ltd",
+      "type": "Payment vs Invoice",
+      "invoiceId": "INV-10513",
+      "paymentId": "PAY-88403",
+      "poId": "PO-70072",
+      "grnId": "GRN-55141",
+      "contractId": "CON-2230",
+      "amount": 1200,
+      "currency": "INR",
+      "risk": "Low",
+      "status": "Resolved",
+      "confidence": 99,
+      "rootCause": "Bank fee was excluded from the remittance amount per approved policy.",
+      "createdAt": "2026-10-03T07:30:00Z",
+      "owner": "Priya N.",
+      "evidence": [
+        "INV-10513",
+        "PAY-88403",
+        "CON-2230"
+      ],
+      "resolutionPr": "PR-2404"
+    },
+    {
+      "id": "EX-2405",
+      "vendor": "Vertex Office Systems",
+      "type": "Invoice vs PO / GRN",
+      "invoiceId": "INV-10518",
+      "paymentId": "PAY-88422",
+      "poId": "PO-70081",
+      "grnId": "GRN-55152",
+      "contractId": "CON-2238",
+      "amount": 5000,
+      "currency": "INR",
+      "risk": "Medium",
+      "status": "Investigation Running",
+      "confidence": 81,
+      "rootCause": "Unit price on invoice differs from latest PO amendment.",
+      "createdAt": "2026-10-04T11:22:00Z",
+      "owner": "Arun K.",
+      "evidence": [
+        "INV-10518",
+        "PO-70081",
+        "GRN-55152",
+        "CON-2238"
+      ],
+      "resolutionPr": "PR-2405"
+    },
+    {
+      "id": "EX-2406",
+      "vendor": "Zenith Medical Supplies",
+      "type": "Duplicate / Suspicious",
+      "invoiceId": "INV-10527",
+      "paymentId": "PAY-88451",
+      "poId": "PO-70088",
+      "grnId": "GRN-55163",
+      "contractId": "CON-2244",
+      "amount": 32000,
+      "currency": "INR",
+      "risk": "High",
+      "status": "Open",
+      "confidence": 74,
+      "rootCause": "Same supplier, amount and line-item fingerprint found in a prior paid invoice.",
+      "createdAt": "2026-10-04T12:05:00Z",
+      "owner": "Meera S.",
+      "evidence": [
+        "INV-10527",
+        "PAY-88451",
+        "PO-70088",
+        "GRN-55163"
+      ],
+      "resolutionPr": "PR-2406"
+    }
+  ],
+  "records": [
+    {
+      "id": "INV-10481",
+      "kind": "Invoice",
+      "vendor": "Apex Industrial Supplies",
+      "amount": 100000,
+      "currency": "INR",
+      "status": "Posted",
+      "date": "2026-09-28",
+      "summary": "Industrial bearings — 200 units @ ₹500",
+      "related": [
+        "PAY-88321",
+        "PO-70041",
+        "GRN-55102",
+        "CON-2209"
+      ]
+    },
+    {
+      "id": "PAY-88321",
+      "kind": "Payment",
+      "vendor": "Apex Industrial Supplies",
+      "amount": 98000,
+      "currency": "INR",
+      "status": "Settled",
+      "date": "2026-10-01",
+      "summary": "98% remittance; 2% early-pay discount",
+      "related": [
+        "INV-10481",
+        "CON-2209"
+      ]
+    },
+    {
+      "id": "PO-70041",
+      "kind": "Purchase Order",
+      "vendor": "Apex Industrial Supplies",
+      "amount": 100000,
+      "currency": "INR",
+      "status": "Approved",
+      "date": "2026-09-20",
+      "summary": "200 units at ₹500",
+      "related": [
+        "INV-10481",
+        "GRN-55102"
+      ]
+    },
+    {
+      "id": "GRN-55102",
+      "kind": "GRN",
+      "vendor": "Apex Industrial Supplies",
+      "amount": 100000,
+      "currency": "INR",
+      "status": "Received",
+      "date": "2026-09-26",
+      "summary": "200 units received",
+      "related": [
+        "PO-70041",
+        "INV-10481"
+      ]
+    },
+    {
+      "id": "CON-2209",
+      "kind": "Contract",
+      "vendor": "Apex Industrial Supplies",
+      "amount": 0,
+      "currency": "INR",
+      "status": "Active",
+      "date": "2026-01-01",
+      "summary": "2% early-payment discount if settled within 10 days",
+      "related": [
+        "INV-10481",
+        "PAY-88321"
+      ]
+    },
+    {
+      "id": "APP-7741",
+      "kind": "Approval",
+      "vendor": "Apex Industrial Supplies",
+      "amount": 100000,
+      "currency": "INR",
+      "status": "Approved",
+      "date": "2026-09-29",
+      "summary": "Discount eligibility approval",
+      "related": [
+        "INV-10481",
+        "CON-2209"
+      ]
+    },
+    {
+      "id": "INV-10492",
+      "kind": "Invoice",
+      "vendor": "Northstar Components",
+      "amount": 210000,
+      "currency": "INR",
+      "status": "Posted",
+      "date": "2026-10-01",
+      "summary": "4,200 units @ ₹50",
+      "related": [
+        "PO-70055",
+        "GRN-55119"
+      ]
+    },
+    {
+      "id": "PO-70055",
+      "kind": "Purchase Order",
+      "vendor": "Northstar Components",
+      "amount": 200000,
+      "currency": "INR",
+      "status": "Amended",
+      "date": "2026-09-18",
+      "summary": "Original 4,000 units; amendment under review",
+      "related": [
+        "INV-10492",
+        "GRN-55119"
+      ]
+    },
+    {
+      "id": "GRN-55119",
+      "kind": "GRN",
+      "vendor": "Northstar Components",
+      "amount": 200000,
+      "currency": "INR",
+      "status": "Partial Receipt",
+      "date": "2026-09-30",
+      "summary": "4,000 units received",
+      "related": [
+        "INV-10492",
+        "PO-70055"
+      ]
+    },
+    {
+      "id": "CON-2215",
+      "kind": "Contract",
+      "vendor": "Northstar Components",
+      "amount": 0,
+      "currency": "INR",
+      "status": "Active",
+      "date": "2026-01-12",
+      "summary": "Short shipment credit terms apply after confirmed shortage",
+      "related": [
+        "PO-70055",
+        "GRN-55119"
+      ]
+    },
+    {
+      "id": "INV-10501",
+      "kind": "Invoice",
+      "vendor": "BluePeak Logistics",
+      "amount": 75000,
+      "currency": "INR",
+      "status": "Posted",
+      "date": "2026-10-02",
+      "summary": "Freight services — invoice fingerprint matches prior document",
+      "related": [
+        "PAY-88371",
+        "PO-70061"
+      ]
+    },
+    {
+      "id": "PAY-88371",
+      "kind": "Payment",
+      "vendor": "BluePeak Logistics",
+      "amount": 75000,
+      "currency": "INR",
+      "status": "Pending",
+      "date": "2026-10-03",
+      "summary": "Payment held pending duplicate review",
+      "related": [
+        "INV-10501"
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "id": "POL-01",
+      "name": "Early Payment Discount",
+      "condition": "Discount <= 2% and settlement within contractual window",
+      "approval": "Required",
+      "risk": "Medium",
+      "status": "Active",
+      "version": "v3.2"
+    },
+    {
+      "id": "POL-02",
+      "name": "Short Shipment Credit",
+      "condition": "GRN shortage confirmed and no conflicting PO amendment",
+      "approval": "Required",
+      "risk": "High",
+      "status": "Active",
+      "version": "v2.1"
+    },
+    {
+      "id": "POL-03",
+      "name": "Duplicate Payment Prevention",
+      "condition": "Block if duplicate fingerprint or same obligation is already paid",
+      "approval": "Required",
+      "risk": "Critical",
+      "status": "Active",
+      "version": "v4.0"
+    },
+    {
+      "id": "POL-04",
+      "name": "Evidence Sufficiency",
+      "condition": "All required source records must be present before action",
+      "approval": "System gate",
+      "risk": "High",
+      "status": "Active",
+      "version": "v1.4"
+    }
+  ],
+  "skills": [
+    {
+      "id": "SK-01",
+      "name": "Contract-backed short payment",
+      "type": "Payment vs Invoice",
+      "version": "1.3.0",
+      "status": "Enabled",
+      "success": 27,
+      "required": "Invoice, payment, contract, approval"
+    },
+    {
+      "id": "SK-02",
+      "name": "Short shipment investigation",
+      "type": "Invoice vs PO / GRN",
+      "version": "0.9.0",
+      "status": "Review",
+      "success": 8,
+      "required": "Invoice, PO, GRN, amendment history"
+    },
+    {
+      "id": "SK-03",
+      "name": "Duplicate obligation check",
+      "type": "Duplicate / Suspicious",
+      "version": "2.0.0",
+      "status": "Enabled",
+      "success": 41,
+      "required": "Invoice, payment, prior invoices"
+    }
+  ],
+  "tools": [
+    {
+      "id": "TOOL-01",
+      "name": "ERP Invoice Reader",
+      "system": "ERP",
+      "type": "Read",
+      "access": "Read-only",
+      "status": "Healthy"
+    },
+    {
+      "id": "TOOL-02",
+      "name": "Bank Payment Reader",
+      "system": "Bank",
+      "type": "Read",
+      "access": "Read-only",
+      "status": "Healthy"
+    },
+    {
+      "id": "TOOL-03",
+      "name": "Contract Repository",
+      "system": "CLM",
+      "type": "Read",
+      "access": "Read-only",
+      "status": "Healthy"
+    },
+    {
+      "id": "TOOL-04",
+      "name": "Approval Service",
+      "system": "Workflow",
+      "type": "Read",
+      "access": "Read-only",
+      "status": "Healthy"
+    },
+    {
+      "id": "TOOL-05",
+      "name": "Shadow Ledger",
+      "system": "ExceptionIQ",
+      "type": "Write",
+      "access": "Sandbox only",
+      "status": "Healthy"
+    }
+  ],
+  "audit": [
+    {
+      "id": "AUD-1791531916145",
+      "timestamp": "2026-10-09T07:45:16.145Z",
+      "actor": "Finance Analyst",
+      "event": "Resolution PR generated",
+      "detail": "EX-2402 / PR-2402"
+    },
+    {
+      "id": "AUD-1791531913890",
+      "timestamp": "2026-10-09T07:45:13.890Z",
+      "actor": "Finance Analyst",
+      "event": "Investigation completed",
+      "detail": "EX-2402: Investigation completed: evidence gathered and deterministic checks evaluated."
+    }
+  ]
 }
