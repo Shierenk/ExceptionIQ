@@ -1,21 +1,26 @@
 {
-  "name": "exceptioniq-frontend",
-  "private": true,
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 5173",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 5173"
-  },
-  "dependencies": {
-    "@vitejs/plugin-react": "^5.0.4",
-    "exceptioniq": "file:..",
-    "lucide-react": "^0.545.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.4",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.7"
-  }
+    "name": "exceptioniq-frontend",
+    "private": true,
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite --host 0.0.0.0 --port 5173",
+        "build": "tsc -b && vite build",
+        "preview": "vite preview --host 0.0.0.0 --port 5173"
+    },
+    "dependencies": {
+        "@vitejs/plugin-react": "^5.0.4",
+        "exceptioniq": "file:..",
+        "lucide-react": "^0.545.0",
+        "prettier": "^3.9.9",
+        "react": "^19.1.1",
+        "react-dom": "^19.1.1",
+        "react-router-dom": "^7.9.4",
+        "typescript": "^5.9.2",
+        "vite": "^7.1.7"
+    },
+    "allowScripts": {
+        "esbuild@0.28.2": true,
+        "fsevents@2.3.3": true
+    }
 }

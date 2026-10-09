@@ -1,31 +1,1143 @@
-import React,{useEffect,useMemo,useState} from 'react'; import {createRoot} from 'react-dom/client'; import {BrowserRouter,useLocation,useNavigate} from 'react-router-dom'; import {LayoutDashboard,Inbox,ClipboardCheck,AlertTriangle,Search,GitPullRequest,ShieldCheck,History,SlidersHorizontal,Workflow,Database,ChevronRight,Play,Check, X, FileText, Network, Wrench, LockKeyhole, RefreshCw} from 'lucide-react'; import './styles.css';
-const API='http://localhost:3001/api';
-type Exception={id:string;vendor:string;type:string;amount:number;currency:string;risk:string;status:string;confidence:number;rootCause:string;owner:string;createdAt:string;evidence:string[];resolutionPr:string};
-const money=(n:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(n);
-const navGroups=[['WORKSPACE',[['Overview','/'],['Exception Queue','/exceptions'],['Approval Queue','/approvals'],['Escalations','/escalations']]],['INVESTIGATION',[['Investigation Runs','/investigations'],['Evidence Register','/evidence'],['Finance Records','/records']]],['RESOLUTION',[['Resolution PRs','/prs'],['Shadow Ledger','/shadow'],['Verification','/verification']]],['GOVERNANCE',[['Policies','/policies'],['Exception Skills','/skills'],['Tool Registry','/tools']]],['CONTROL',[['Audit Trail','/audit']]]];
-function App(){const [logged,setLogged]=useState(localStorage.getItem('exiq_login')==='1'); if(!logged)return <Login onLogin={()=>{localStorage.setItem('exiq_login','1');setLogged(true)}}/>; return <Shell onLogout={()=>{localStorage.removeItem('exiq_login');setLogged(false)}}/>}
-function Login({onLogin}:{onLogin:()=>void}){const [email,setEmail]=useState('analyst@exceptioniq.local'),[pass,setPass]=useState('demo123'),[err,setErr]=useState(''); const submit=async(e:React.FormEvent)=>{e.preventDefault();const r=await fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});if(r.ok)onLogin();else setErr('Enter email and password.');};return <div className="login"><div className="loginCard"><div className="brand big">EXCEPTION<span>IQ</span></div><div className="eyebrow">GOVERNED FINANCE OPERATIONS</div><h1>Sign in to the exception workspace</h1><p>Investigate, prove and resolve finance exceptions under policy controls.</p><form onSubmit={submit}><label>Work email<input value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input type="password" value={pass} onChange={e=>setPass(e.target.value)}/></label>{err&&<div className="error">{err}</div>}<button className="primary full">Sign in <ChevronRight size={16}/></button></form><div className="loginFoot"><LockKeyhole size={14}/> Demo environment · synthetic finance data only</div></div></div>}
-function Shell({onLogout}:{onLogout:()=>void}){const loc=useLocation(),nav=useNavigate();const [query,setQuery]=useState(''); return <div className="app"><aside><div className="brand">EXCEPTION<span>IQ</span></div><div className="subbrand">FINANCE EXCEPTION CONTROL</div><div className="sideNav">{navGroups.map(([g,items]:any)=><div key={g}><div className="navGroup">{g}</div>{items.map(([label,path]:string)=>{const active=loc.pathname===path||loc.pathname.startsWith(path+'/');return <button key={path} className={'navItem '+(active?'active':'')} onClick={()=>nav(path)}>{icon(label)}<span>{label}</span></button>})}</div>)}</div><div className="sideBottom"><div className="env"><span className="dot"/> Synthetic demo environment</div><button className="navItem" onClick={onLogout}>Sign out</button></div></aside><main><header><div className="crumb">ExceptionIQ / {titleFor(loc.pathname)}</div><div className="headerRight"><div className="search"><Search size={15}/><input placeholder="Search cases, records, vendors" value={query} onChange={e=>setQuery(e.target.value)}/></div><div className="user">FA <span>Finance Analyst</span></div></div></header><div className="content"><Page query={query}/></div></main></div>}
-function icon(label:string){const p={size:16,strokeWidth:1.8}; if(label==='Overview')return <LayoutDashboard {...p}/>;if(label.includes('Queue'))return <Inbox {...p}/>;if(label==='Escalations')return <AlertTriangle {...p}/>;if(label.includes('Investigation'))return <Workflow {...p}/>;if(label.includes('Evidence'))return <Network {...p}/>;if(label.includes('Records'))return <Database {...p}/>;if(label.includes('PR'))return <GitPullRequest {...p}/>;if(label.includes('Shadow')||label==='Verification')return <ShieldCheck {...p}/>;if(label==='Audit Trail')return <History {...p}/>;if(label==='Policies')return <SlidersHorizontal {...p}/>;if(label==='Exception Skills')return <ClipboardCheck {...p}/>;return <Wrench {...p}/>}
-function titleFor(p:string){return p==='/'?'Overview':p.split('/').filter(Boolean).map(x=>x.replace(/-/g,' ')).map(x=>x[0]?.toUpperCase()+x.slice(1)).join(' / ')}
-function Page({query}:{query:string}){const p=location.pathname; if(p==='/')return <Overview/>; if(p.startsWith('/exceptions/'))return <Case id={p.split('/')[2]}/>; if(p==='/exceptions')return <Queue query={query}/>; if(p==='/approvals')return <Queue query={query} approval/>; if(p==='/escalations')return <Queue query={query} escalation/>; if(p==='/investigations')return <Runs/>; if(p==='/evidence')return <Evidence/>; if(p==='/records')return <Catalog kind="records"/>; if(p==='/prs')return <PRs/>; if(p==='/shadow')return <Shadow/>; if(p==='/verification')return <Verification/>; if(p==='/policies')return <Catalog kind="policies"/>; if(p==='/skills')return <Catalog kind="skills"/>; if(p==='/tools')return <Catalog kind="tools"/>; if(p==='/audit')return <Audit/>; return <Overview/>}
-function useData(){const [data,setData]=useState<any>(null);const load=()=>fetch(API+'/data').then(r=>r.json()).then(setData);useEffect(()=>{load()},[]);return {data,load}}
-function Overview(){const {data}=useData();if(!data)return <Loading/>;const es=data.exceptions as Exception[];const open=es.filter(e=>['Open','Investigation Running','Awaiting Evidence'].includes(e.status)).length;const appr=es.filter(e=>e.status==='Awaiting Approval').length;const esc=es.filter(e=>e.status==='Escalated').length;const resolved=es.filter(e=>e.status==='Resolved').length;return <><PageHead title="Operations overview" desc="One controlled workspace from exception intake to verified resolution."/><div className="metrics"><Metric label="Open exceptions" value={open}/><Metric label="Awaiting approval" value={appr}/><Metric label="Escalated" value={esc}/><Metric label="Resolved today" value={resolved}/></div><div className="grid2"><section className="panel"><PanelTitle title="Exception mix"/><div className="bars">{['Payment vs Invoice','Invoice vs PO / GRN','Duplicate / Suspicious'].map(t=><div className="barRow" key={t}><span>{t}</span><div><i style={{width:`${Math.max(20,es.filter(e=>e.type===t).length/es.length*100)}%`}}/></div><b>{es.filter(e=>e.type===t).length}</b></div>)}</div></section><section className="panel"><PanelTitle title="Control posture"/><div className="controlList"><Control ok label="Policy gates enforced"/><Control ok label="Human approval for consequential actions"/><Control ok label="Shadow ledger pre-flight"/><Control ok label="Audit event on state change"/></div></section></div><section className="panel"><PanelTitle title="High-attention cases" action={<button className="linkBtn" onClick={()=>location.href='/exceptions'}>View queue <ChevronRight size={14}/></button>}/><CaseTable items={es.filter(e=>e.risk==='Critical'||e.risk==='High').slice(0,4)}/></section></>}
-function Metric({label,value}:{label:string,value:number}){return <div className="metric"><div className="metricLabel">{label}</div><strong>{value}</strong><span className="muted">synthetic demo</span></div>}
-function PanelTitle({title,action}:{title:string,action?:React.ReactNode}){return <div className="panelTitle"><h2>{title}</h2>{action}</div>}
-function Control({label,ok}:{label:string,ok:boolean}){return <div className="control"><span className={ok?'check':'warn'}>{ok?'✓':'!'}</span><span>{label}</span><span className="push">{ok?'PASS':'REVIEW'}</span></div>}
-function Queue({query,approval,escalation}:{query:string;approval?:boolean;escalation?:boolean}){const {data}=useData();if(!data)return <Loading/>;let es=data.exceptions as Exception[];if(approval)es=es.filter(e=>e.status==='Awaiting Approval'||e.status==='Shadow Verification');if(escalation)es=es.filter(e=>e.status==='Escalated'||e.risk==='Critical');if(query)es=es.filter(e=>`${e.id} ${e.vendor} ${e.type}`.toLowerCase().includes(query.toLowerCase()));return <><PageHead title={approval?'Approval queue':escalation?'Escalations':'Exception queue'} desc={approval?'Review Resolution PRs that require explicit human authorization.':escalation?'Cases stopped safely because evidence or policy prevents action.':'The operational queue for every unresolved finance exception.'}/><div className="toolbar"><span>{es.length} cases</span><select><option>All risk</option><option>High</option><option>Critical</option></select><select><option>All types</option><option>Payment vs Invoice</option><option>Invoice vs PO / GRN</option><option>Duplicate / Suspicious</option></select><button className="secondary" onClick={()=>location.reload()}><RefreshCw size={14}/> Refresh</button></div><section className="panel"><CaseTable items={es}/></section></>}
-function CaseTable({items}:{items:Exception[]}){const nav=useNavigate();return <table><thead><tr><th>CASE</th><th>VENDOR</th><th>TYPE</th><th>VARIANCE</th><th>RISK</th><th>STATUS</th><th>CONF.</th><th/></tr></thead><tbody>{items.map(e=><tr key={e.id} onClick={()=>nav('/exceptions/'+e.id)}><td><b>{e.id}</b><small>{new Date(e.createdAt).toLocaleString()}</small></td><td>{e.vendor}</td><td>{e.type}</td><td className="amount">{money(e.amount)}</td><td><Badge text={e.risk}/></td><td><Badge text={e.status}/></td><td>{e.confidence}%</td><td><ChevronRight size={16}/></td></tr>)}</tbody></table>}
-function Badge({text}:{text:string}){let c=text.toLowerCase().replaceAll(' ','-').replaceAll('/','');return <span className={'badge '+c}>{text}</span>}
-function PageHead({title,desc}:{title:string,desc:string}){return <div className="pageHead"><div><div className="eyebrow">OPERATIONS</div><h1>{title}</h1><p>{desc}</p></div><div className="headActions"><button className="secondary" onClick={()=>alert('Export is available for the current synthetic dataset.')}>Export</button></div></div>}
-function Case({id}:{id:string}){const {data,load}=useData();const [detail,setDetail]=useState<any>(null);const [busy,setBusy]=useState('');useEffect(()=>{fetch(API+'/exceptions/'+id).then(r=>r.json()).then(setDetail)},[id]);if(!data||!detail)return <Loading/>;const act=async(action:string)=>{setBusy(action);const r=await fetch(API+'/actions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,exceptionId:id})});const j=await r.json();if(!r.ok)alert(j.error);else {setDetail({...detail,...j.exception});load();}setBusy('')};return <><div className="caseHeader"><div><button className="back" onClick={()=>location.href='/exceptions'}>← Exception queue</button><div className="caseTitle"><h1>{detail.id}</h1><Badge text={detail.status}/><Badge text={detail.risk}/></div><p>{detail.vendor} · {detail.type} · Owner {detail.owner}</p></div><div className="caseActions"><button className="secondary" onClick={()=>act('escalate')} disabled={!!busy}>Escalate</button><button className="primary" onClick={()=>act('investigate')} disabled={!!busy}><Play size={14}/> {busy==='investigate'?'Running…':'Run investigation'}</button></div></div><div className="caseGrid"><div className="mainCol"><section className="panel"><PanelTitle title="Case summary"/><div className="facts"><Fact l="Financial variance" v={money(detail.amount)}/><Fact l="Agent confidence" v={detail.confidence+'%'}/><Fact l="Root cause" v={detail.rootCause}/><Fact l="Resolution PR" v={detail.resolutionPr}/></div></section><section className="panel"><PanelTitle title="Transaction chain"/><div className="chain">{detail.evidence.map((r:string,i:number)=><React.Fragment key={r}><button className="recordNode" onClick={()=>alert('Record '+r+' opened in the Finance Record Viewer.')}>{r}<small>{data.records.find((x:any)=>x.id===r)?.kind||'Evidence'}</small></button>{i<detail.evidence.length-1&&<ChevronRight/>}</React.Fragment>)}</div></section><section className="panel"><PanelTitle title="Evidence register" action={<button className="linkBtn" onClick={()=>location.href='/evidence'}>Open register</button>}/><div className="evidenceRows">{detail.evidence.map((r:string)=><div key={r}><FileText size={16}/><b>{r}</b><span>{data.records.find((x:any)=>x.id===r)?.summary}</span><Badge text="Sufficient"/></div>)}</div></section></div><aside className="rightCol"><section className="panel decision"><PanelTitle title="Next governed action"/><div className="decisionText">{detail.status==='Open'?'Run the investigation to gather evidence and execute deterministic controls.':detail.status==='Investigation Running'?'Review the generated evidence and create a Resolution PR.':detail.status==='Awaiting Approval'?'Explicit human approval is required before shadow application.':detail.status==='Shadow Verification'?'Shadow ledger is the only permitted execution boundary.':'No further financial action is required.'}</div>{detail.status==='Investigation Running'&&<button className="primary full" onClick={()=>act('generate-pr')}>Generate Resolution PR</button>}{detail.status==='Awaiting Approval'&&<div className="buttonStack"><button className="primary full" onClick={()=>act('approve')}><Check size={15}/> Approve PR</button><button className="danger full" onClick={()=>act('reject')}><X size={15}/> Reject / escalate</button><button className="secondary full" onClick={()=>act('request-evidence')}>Request evidence</button></div>}{detail.status==='Shadow Verification'&&<button className="primary full" onClick={()=>act('shadow-apply')}><ShieldCheck size={15}/> Run shadow verification</button>}{detail.status==='Verified'&&<button className="primary full" onClick={()=>act('resolve')}><Check size={15}/> Close verified case</button>}</section><section className="panel"><PanelTitle title="Policy checks"/>{detail.policies.slice(0,3).map((p:any)=><div className="policyMini" key={p.id}><div><b>{p.name}</b><small>{p.condition}</small></div><span className="pass">PASS</span></div>)}</section></aside></div></>}
-function Fact({l,v}:{l:string,v:string}){return <div><small>{l}</small><b>{v}</b></div>}
-function Runs(){const {data}=useData();if(!data)return <Loading/>;return <><PageHead title="Investigation runs" desc="Every investigation is a visible, replayable sequence of governed steps."/><div className="runGrid">{data.exceptions.map((e:Exception)=><div className="panel runCard" key={e.id}><div className="runTop"><b>{e.id}</b><Badge text={e.status}/></div><h3>{e.vendor}</h3><div className="steps"><span className="done">1 Plan</span><span className="done">2 Gather</span><span className={e.status==='Open'?'current':'done'}>3 Prove</span><span>4 Validate</span><span>5 Approve</span><span>6 Shadow</span></div><div className="runButtons"><button className="secondary" onClick={()=>location.href='/exceptions/'+e.id}>Open run</button><button className="secondary" onClick={async()=>{await fetch(API+'/actions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'defend',exceptionId:e.id})});alert('Defence test passed: source instruction ignored and logged.')}}>Defend test</button></div></div>)}</div></>}
-function Evidence(){const {data}=useData();if(!data)return <Loading/>;return <><PageHead title="Evidence register" desc="Traceable source evidence behind every exception conclusion."/><section className="panel"><table><thead><tr><th>RECORD</th><th>TYPE</th><th>VENDOR</th><th>STATUS</th><th>SUMMARY</th></tr></thead><tbody>{data.records.map((r:any)=><tr key={r.id}><td><b>{r.id}</b></td><td>{r.kind}</td><td>{r.vendor}</td><td><Badge text={r.status}/></td><td>{r.summary}</td></tr>)}</tbody></table></section></>}
-function Catalog({kind}:{kind:string}){const {data}=useData();if(!data)return <Loading/>;const title=kind==='records'?'Finance records':kind==='policies'?'Policy controls':kind==='skills'?'Exception skills':'Tool registry';const desc=kind==='records'?'Invoices, payments, POs, GRNs, contracts and approvals used by investigations.':kind==='policies'?'Deterministic rules that decide what the agent may recommend or execute.':kind==='skills'?'Versioned exception procedures with evidence requirements and tests.':'Bounded connectors and tools available to the governed runtime.';return <><PageHead title={title} desc={desc}/><section className="panel">{kind==='skills'&&<div className="skillBanner"><div><b>Skill Compiler</b><span>Recurring reviewed exceptions can be converted into a typed, testable draft. Human review is required before enablement.</span></div><button className="primary" onClick={async()=>{const e=data.exceptions.find((x:any)=>x.type==='Invoice vs PO / GRN');await fetch(API+'/actions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'compile-skill',exceptionId:e?.id})});alert('Skill draft created and audit event recorded.')}}>Draft skill from pattern</button></div>}{kind==='records'?<table><thead><tr><th>ID</th><th>KIND</th><th>VENDOR</th><th>AMOUNT</th><th>STATUS</th><th>DATE</th><th>SUMMARY</th></tr></thead><tbody>{data.records.map((r:any)=><tr key={r.id}><td><b>{r.id}</b></td><td>{r.kind}</td><td>{r.vendor}</td><td className="amount">{r.amount?money(r.amount):'—'}</td><td><Badge text={r.status}/></td><td>{r.date}</td><td>{r.summary}</td></tr>)}</tbody></table>:kind==='policies'?<table><thead><tr><th>POLICY</th><th>CONDITION</th><th>APPROVAL</th><th>RISK</th><th>VERSION</th><th>STATUS</th></tr></thead><tbody>{data.policies.map((p:any)=><tr key={p.id}><td><b>{p.name}</b><small>{p.id}</small></td><td>{p.condition}</td><td>{p.approval}</td><td><Badge text={p.risk}/></td><td>{p.version}</td><td><Badge text={p.status}/></td></tr>)}</tbody></table>:kind==='skills'?<table><thead><tr><th>SKILL</th><th>TYPE</th><th>VERSION</th><th>REQUIRED EVIDENCE</th><th>SUCCESSFUL CASES</th><th>STATUS</th></tr></thead><tbody>{data.skills.map((s:any)=><tr key={s.id}><td><b>{s.name}</b><small>{s.id}</small></td><td>{s.type}</td><td>{s.version}</td><td>{s.required}</td><td>{s.success}</td><td><Badge text={s.status}/></td></tr>)}</tbody></table>:<table><thead><tr><th>TOOL</th><th>SYSTEM</th><th>TYPE</th><th>ACCESS</th><th>STATUS</th></tr></thead><tbody>{data.tools.map((t:any)=><tr key={t.id}><td><b>{t.name}</b><small>{t.id}</small></td><td>{t.system}</td><td>{t.type}</td><td>{t.access}</td><td><Badge text={t.status}/></td></tr>)}</tbody></table>}</section></>}
-function PRs(){const {data}=useData();if(!data)return <Loading/>;return <><PageHead title="Resolution PRs" desc="Diffable, evidence-backed financial decisions awaiting controlled action."/><section className="panel"><table><thead><tr><th>PR</th><th>CASE</th><th>ROOT CAUSE</th><th>FINANCIAL IMPACT</th><th>POLICY</th><th>REQUIRED ACTION</th></tr></thead><tbody>{data.exceptions.map((e:Exception)=><tr key={e.resolutionPr} onClick={()=>location.href='/exceptions/'+e.id}><td><b>{e.resolutionPr}</b></td><td>{e.id}</td><td>{e.rootCause}</td><td className="amount">{money(e.amount)}</td><td><Badge text="Policy checked"/></td><td>{e.status==='Awaiting Approval'?'Approve / Reject':e.status==='Shadow Verification'?'Shadow verify':'Investigate'}</td></tr>)}</tbody></table></section></>}
-function Shadow(){const {data}=useData();if(!data)return <Loading/>;return <><PageHead title="Shadow ledger" desc="Pre-flight every approved change before any permitted connector write."/><div className="metrics"><Metric label="Pending shadow runs" value={data.exceptions.filter((e:Exception)=>e.status==='Shadow Verification').length}/><Metric label="Policy checks" value={4}/><Metric label="Duplicate actions" value={0}/><Metric label="Live writes" value={0}/></div><section className="panel"><PanelTitle title="Verification controls"/><div className="controlList"><Control ok label="Expected vs actual balance"/><Control ok label="Policy satisfied"/><Control ok label="No duplicate financial action"/><Control ok label="Idempotency check"/><Control ok label="Connector boundary enforced"/></div></section></>}
-function Verification(){const {data}=useData();if(!data)return <Loading/>;return <><PageHead title="Verification" desc="Outcome verification after shadow application; unresolved mismatches return to escalation."/><section className="panel"><table><thead><tr><th>CASE</th><th>RESULT</th><th>LEDGER STATE</th><th>VERIFICATION</th></tr></thead><tbody>{data.exceptions.map((e:Exception)=><tr key={e.id}><td><b>{e.id}</b><small>{e.vendor}</small></td><td><Badge text={e.status==='Verified'||e.status==='Resolved'?'PASS':'PENDING'}/></td><td>{e.status==='Verified'||e.status==='Resolved'?'Shadow result matches expected state':'Awaiting governed action'}</td><td>{e.status==='Verified'||e.status==='Resolved'?'Verified':'Not run'}</td></tr>)}</tbody></table></section></>}
-function Audit(){const {data}=useData();if(!data)return <Loading/>;return <><PageHead title="Audit trail" desc="Immutable-style event history for investigation, approvals, policy gates and shadow verification."/><section className="panel"><table><thead><tr><th>TIMESTAMP</th><th>ACTOR</th><th>EVENT</th><th>DETAIL</th></tr></thead><tbody>{data.audit.map((a:any)=><tr key={a.id}><td>{new Date(a.timestamp).toLocaleString()}</td><td>{a.actor}</td><td><b>{a.event}</b></td><td>{a.detail}</td></tr>)}</tbody></table></section></>}
-function Loading(){return <div className="loading"><RefreshCw className="spin"/> Loading workspace…</div>}
-createRoot(document.getElementById('root')!).render(<BrowserRouter><App/></BrowserRouter>);
+import React, { useEffect, useMemo, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
+import {
+    LayoutDashboard,
+    Inbox,
+    ClipboardCheck,
+    AlertTriangle,
+    Search,
+    GitPullRequest,
+    ShieldCheck,
+    History,
+    SlidersHorizontal,
+    Workflow,
+    Database,
+    ChevronRight,
+    Play,
+    Check,
+    X,
+    FileText,
+    Network,
+    Wrench,
+    LockKeyhole,
+    RefreshCw,
+} from 'lucide-react';
+import './styles.css';
+const API = 'http://localhost:3001/api';
+type Exception = {
+    id: string;
+    vendor: string;
+    type: string;
+    amount: number;
+    currency: string;
+    risk: string;
+    status: string;
+    confidence: number;
+    rootCause: string;
+    owner: string;
+    createdAt: string;
+    evidence: string[];
+    resolutionPr: string;
+};
+const money = (n: number) =>
+    new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0,
+    }).format(n);
+const navGroups = [
+    [
+        'WORKSPACE',
+        [
+            ['Overview', '/'],
+            ['Exception Queue', '/exceptions'],
+            ['Approval Queue', '/approvals'],
+            ['Escalations', '/escalations'],
+        ],
+    ],
+    [
+        'INVESTIGATION',
+        [
+            ['Investigation Runs', '/investigations'],
+            ['Evidence Register', '/evidence'],
+            ['Finance Records', '/records'],
+        ],
+    ],
+    [
+        'RESOLUTION',
+        [
+            ['Resolution PRs', '/prs'],
+            ['Shadow Ledger', '/shadow'],
+            ['Verification', '/verification'],
+        ],
+    ],
+    [
+        'GOVERNANCE',
+        [
+            ['Policies', '/policies'],
+            ['Exception Skills', '/skills'],
+            ['Tool Registry', '/tools'],
+        ],
+    ],
+    ['CONTROL', [['Audit Trail', '/audit']]],
+];
+function App() {
+    const [logged, setLogged] = useState(localStorage.getItem('exiq_login') === '1');
+    if (!logged)
+        return (
+            <Login
+                onLogin={() => {
+                    localStorage.setItem('exiq_login', '1');
+                    setLogged(true);
+                }}
+            />
+        );
+    return (
+        <Shell
+            onLogout={() => {
+                localStorage.removeItem('exiq_login');
+                setLogged(false);
+            }}
+        />
+    );
+}
+function Login({ onLogin }: { onLogin: () => void }) {
+    const [email, setEmail] = useState('analyst@exceptioniq.local'),
+        [pass, setPass] = useState('demo123'),
+        [err, setErr] = useState('');
+    const submit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const r = await fetch(API + '/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password: pass }),
+        });
+        if (r.ok) onLogin();
+        else setErr('Enter email and password.');
+    };
+    return (
+        <div className="login">
+            <div className="loginCard">
+                <div className="brand big">
+                    EXCEPTION<span>IQ</span>
+                </div>
+                <div className="eyebrow">GOVERNED FINANCE OPERATIONS</div>
+                <h1>Sign in to the exception workspace</h1>
+                <p>Investigate, prove and resolve finance exceptions under policy controls.</p>
+                <form onSubmit={submit}>
+                    <label>
+                        Work email
+                        <input value={email} onChange={(e) => setEmail(e.target.value)} />
+                    </label>
+                    <label>
+                        Password
+                        <input
+                            type="password"
+                            value={pass}
+                            onChange={(e) => setPass(e.target.value)}
+                        />
+                    </label>
+                    {err && <div className="error">{err}</div>}
+                    <button className="primary full">
+                        Sign in <ChevronRight size={16} />
+                    </button>
+                </form>
+                <div className="loginFoot">
+                    <LockKeyhole size={14} /> Demo environment · synthetic finance data only
+                </div>
+            </div>
+        </div>
+    );
+}
+function Shell({ onLogout }: { onLogout: () => void }) {
+    const loc = useLocation(),
+        nav = useNavigate();
+    const [query, setQuery] = useState('');
+    return (
+        <div className="app">
+            <aside>
+                <div className="brand">
+                    EXCEPTION<span>IQ</span>
+                </div>
+                <div className="subbrand">FINANCE EXCEPTION CONTROL</div>
+                <div className="sideNav">
+                    {navGroups.map(([g, items]: any) => (
+                        <div key={g}>
+                            <div className="navGroup">{g}</div>
+                            {items.map(([label, path]: string) => {
+                                const active =
+                                    loc.pathname === path || loc.pathname.startsWith(path + '/');
+                                return (
+                                    <button
+                                        key={path}
+                                        className={'navItem ' + (active ? 'active' : '')}
+                                        onClick={() => nav(path)}
+                                    >
+                                        {icon(label)}
+                                        <span>{label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    ))}
+                </div>
+                <div className="sideBottom">
+                    <div className="env">
+                        <span className="dot" /> Synthetic demo environment
+                    </div>
+                    <button className="navItem" onClick={onLogout}>
+                        Sign out
+                    </button>
+                </div>
+            </aside>
+            <main>
+                <header>
+                    <div className="crumb">ExceptionIQ / {titleFor(loc.pathname)}</div>
+                    <div className="headerRight">
+                        <div className="search">
+                            <Search size={15} />
+                            <input
+                                placeholder="Search cases, records, vendors"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                            />
+                        </div>
+                        <div className="user">
+                            FA <span>Finance Analyst</span>
+                        </div>
+                    </div>
+                </header>
+                <div className="content">
+                    <Page query={query} />
+                </div>
+            </main>
+        </div>
+    );
+}
+function icon(label: string) {
+    const p = { size: 16, strokeWidth: 1.8 };
+    if (label === 'Overview') return <LayoutDashboard {...p} />;
+    if (label.includes('Queue')) return <Inbox {...p} />;
+    if (label === 'Escalations') return <AlertTriangle {...p} />;
+    if (label.includes('Investigation')) return <Workflow {...p} />;
+    if (label.includes('Evidence')) return <Network {...p} />;
+    if (label.includes('Records')) return <Database {...p} />;
+    if (label.includes('PR')) return <GitPullRequest {...p} />;
+    if (label.includes('Shadow') || label === 'Verification') return <ShieldCheck {...p} />;
+    if (label === 'Audit Trail') return <History {...p} />;
+    if (label === 'Policies') return <SlidersHorizontal {...p} />;
+    if (label === 'Exception Skills') return <ClipboardCheck {...p} />;
+    return <Wrench {...p} />;
+}
+function titleFor(p: string) {
+    return p === '/'
+        ? 'Overview'
+        : p
+              .split('/')
+              .filter(Boolean)
+              .map((x) => x.replace(/-/g, ' '))
+              .map((x) => x[0]?.toUpperCase() + x.slice(1))
+              .join(' / ');
+}
+function Page({ query }: { query: string }) {
+    const p = location.pathname;
+    if (p === '/') return <Overview />;
+    if (p.startsWith('/exceptions/')) return <Case id={p.split('/')[2]} />;
+    if (p === '/exceptions') return <Queue query={query} />;
+    if (p === '/approvals') return <Queue query={query} approval />;
+    if (p === '/escalations') return <Queue query={query} escalation />;
+    if (p === '/investigations') return <Runs />;
+    if (p === '/evidence') return <Evidence />;
+    if (p === '/records') return <Catalog kind="records" />;
+    if (p === '/prs') return <PRs />;
+    if (p === '/shadow') return <Shadow />;
+    if (p === '/verification') return <Verification />;
+    if (p === '/policies') return <Catalog kind="policies" />;
+    if (p === '/skills') return <Catalog kind="skills" />;
+    if (p === '/tools') return <Catalog kind="tools" />;
+    if (p === '/audit') return <Audit />;
+    return <Overview />;
+}
+function useData() {
+    const [data, setData] = useState<any>(null);
+    const load = () =>
+        fetch(API + '/data')
+            .then((r) => r.json())
+            .then(setData);
+    useEffect(() => {
+        load();
+    }, []);
+    return { data, load };
+}
+function Overview() {
+    const { data } = useData();
+    if (!data) return <Loading />;
+    const es = data.exceptions as Exception[];
+    const open = es.filter((e) =>
+        ['Open', 'Investigation Running', 'Awaiting Evidence'].includes(e.status),
+    ).length;
+    const appr = es.filter((e) => e.status === 'Awaiting Approval').length;
+    const esc = es.filter((e) => e.status === 'Escalated').length;
+    const resolved = es.filter((e) => e.status === 'Resolved').length;
+    return (
+        <>
+            <PageHead
+                title="Operations overview"
+                desc="One controlled workspace from exception intake to verified resolution."
+            />
+            <div className="metrics">
+                <Metric label="Open exceptions" value={open} />
+                <Metric label="Awaiting approval" value={appr} />
+                <Metric label="Escalated" value={esc} />
+                <Metric label="Resolved today" value={resolved} />
+            </div>
+            <div className="grid2">
+                <section className="panel">
+                    <PanelTitle title="Exception mix" />
+                    <div className="bars">
+                        {[
+                            'Payment vs Invoice',
+                            'Invoice vs PO / GRN',
+                            'Duplicate / Suspicious',
+                        ].map((t) => (
+                            <div className="barRow" key={t}>
+                                <span>{t}</span>
+                                <div>
+                                    <i
+                                        style={{
+                                            width: `${Math.max(20, (es.filter((e) => e.type === t).length / es.length) * 100)}%`,
+                                        }}
+                                    />
+                                </div>
+                                <b>{es.filter((e) => e.type === t).length}</b>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+                <section className="panel">
+                    <PanelTitle title="Control posture" />
+                    <div className="controlList">
+                        <Control ok label="Policy gates enforced" />
+                        <Control ok label="Human approval for consequential actions" />
+                        <Control ok label="Shadow ledger pre-flight" />
+                        <Control ok label="Audit event on state change" />
+                    </div>
+                </section>
+            </div>
+            <section className="panel">
+                <PanelTitle
+                    title="High-attention cases"
+                    action={
+                        <button className="linkBtn" onClick={() => (location.href = '/exceptions')}>
+                            View queue <ChevronRight size={14} />
+                        </button>
+                    }
+                />
+                <CaseTable
+                    items={es.filter((e) => e.risk === 'Critical' || e.risk === 'High').slice(0, 4)}
+                />
+            </section>
+        </>
+    );
+}
+function Metric({ label, value }: { label: string; value: number }) {
+    return (
+        <div className="metric">
+            <div className="metricLabel">{label}</div>
+            <strong>{value}</strong>
+            <span className="muted">synthetic demo</span>
+        </div>
+    );
+}
+function PanelTitle({ title, action }: { title: string; action?: React.ReactNode }) {
+    return (
+        <div className="panelTitle">
+            <h2>{title}</h2>
+            {action}
+        </div>
+    );
+}
+function Control({ label, ok }: { label: string; ok: boolean }) {
+    return (
+        <div className="control">
+            <span className={ok ? 'check' : 'warn'}>{ok ? '✓' : '!'}</span>
+            <span>{label}</span>
+            <span className="push">{ok ? 'PASS' : 'REVIEW'}</span>
+        </div>
+    );
+}
+function Queue({
+    query,
+    approval,
+    escalation,
+}: {
+    query: string;
+    approval?: boolean;
+    escalation?: boolean;
+}) {
+    const { data } = useData();
+    if (!data) return <Loading />;
+    let es = data.exceptions as Exception[];
+    if (approval)
+        es = es.filter(
+            (e) => e.status === 'Awaiting Approval' || e.status === 'Shadow Verification',
+        );
+    if (escalation) es = es.filter((e) => e.status === 'Escalated' || e.risk === 'Critical');
+    if (query)
+        es = es.filter((e) =>
+            `${e.id} ${e.vendor} ${e.type}`.toLowerCase().includes(query.toLowerCase()),
+        );
+    return (
+        <>
+            <PageHead
+                title={approval ? 'Approval queue' : escalation ? 'Escalations' : 'Exception queue'}
+                desc={
+                    approval
+                        ? 'Review Resolution PRs that require explicit human authorization.'
+                        : escalation
+                          ? 'Cases stopped safely because evidence or policy prevents action.'
+                          : 'The operational queue for every unresolved finance exception.'
+                }
+            />
+            <div className="toolbar">
+                <span>{es.length} cases</span>
+                <select>
+                    <option>All risk</option>
+                    <option>High</option>
+                    <option>Critical</option>
+                </select>
+                <select>
+                    <option>All types</option>
+                    <option>Payment vs Invoice</option>
+                    <option>Invoice vs PO / GRN</option>
+                    <option>Duplicate / Suspicious</option>
+                </select>
+                <button className="secondary" onClick={() => location.reload()}>
+                    <RefreshCw size={14} /> Refresh
+                </button>
+            </div>
+            <section className="panel">
+                <CaseTable items={es} />
+            </section>
+        </>
+    );
+}
+function CaseTable({ items }: { items: Exception[] }) {
+    const nav = useNavigate();
+    return (
+        <table>
+            <thead>
+                <tr>
+                    <th>CASE</th>
+                    <th>VENDOR</th>
+                    <th>TYPE</th>
+                    <th>VARIANCE</th>
+                    <th>RISK</th>
+                    <th>STATUS</th>
+                    <th>CONF.</th>
+                    <th />
+                </tr>
+            </thead>
+            <tbody>
+                {items.map((e) => (
+                    <tr key={e.id} onClick={() => nav('/exceptions/' + e.id)}>
+                        <td>
+                            <b>{e.id}</b>
+                            <small>{new Date(e.createdAt).toLocaleString()}</small>
+                        </td>
+                        <td>{e.vendor}</td>
+                        <td>{e.type}</td>
+                        <td className="amount">{money(e.amount)}</td>
+                        <td>
+                            <Badge text={e.risk} />
+                        </td>
+                        <td>
+                            <Badge text={e.status} />
+                        </td>
+                        <td>{e.confidence}%</td>
+                        <td>
+                            <ChevronRight size={16} />
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    );
+}
+function Badge({ text }: { text: string }) {
+    let c = text.toLowerCase().replaceAll(' ', '-').replaceAll('/', '');
+    return <span className={'badge ' + c}>{text}</span>;
+}
+function PageHead({ title, desc }: { title: string; desc: string }) {
+    return (
+        <div className="pageHead">
+            <div>
+                <div className="eyebrow">OPERATIONS</div>
+                <h1>{title}</h1>
+                <p>{desc}</p>
+            </div>
+            <div className="headActions">
+                <button
+                    className="secondary"
+                    onClick={() => alert('Export is available for the current synthetic dataset.')}
+                >
+                    Export
+                </button>
+            </div>
+        </div>
+    );
+}
+function Case({ id }: { id: string }) {
+    const { data, load } = useData();
+    const [detail, setDetail] = useState<any>(null);
+    const [busy, setBusy] = useState('');
+    useEffect(() => {
+        fetch(API + '/exceptions/' + id)
+            .then((r) => r.json())
+            .then(setDetail);
+    }, [id]);
+    if (!data || !detail) return <Loading />;
+    const act = async (action: string) => {
+        setBusy(action);
+        const r = await fetch(API + '/actions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, exceptionId: id }),
+        });
+        const j = await r.json();
+        if (!r.ok) alert(j.error);
+        else {
+            setDetail({ ...detail, ...j.exception });
+            load();
+        }
+        setBusy('');
+    };
+    return (
+        <>
+            <div className="caseHeader">
+                <div>
+                    <button className="back" onClick={() => (location.href = '/exceptions')}>
+                        ← Exception queue
+                    </button>
+                    <div className="caseTitle">
+                        <h1>{detail.id}</h1>
+                        <Badge text={detail.status} />
+                        <Badge text={detail.risk} />
+                    </div>
+                    <p>
+                        {detail.vendor} · {detail.type} · Owner {detail.owner}
+                    </p>
+                </div>
+                <div className="caseActions">
+                    <button className="secondary" onClick={() => act('escalate')} disabled={!!busy}>
+                        Escalate
+                    </button>
+                    <button
+                        className="primary"
+                        onClick={() => act('investigate')}
+                        disabled={!!busy}
+                    >
+                        <Play size={14} />{' '}
+                        {busy === 'investigate' ? 'Running…' : 'Run investigation'}
+                    </button>
+                </div>
+            </div>
+            <div className="caseGrid">
+                <div className="mainCol">
+                    <section className="panel">
+                        <PanelTitle title="Case summary" />
+                        <div className="facts">
+                            <Fact l="Financial variance" v={money(detail.amount)} />
+                            <Fact l="Agent confidence" v={detail.confidence + '%'} />
+                            <Fact l="Root cause" v={detail.rootCause} />
+                            <Fact l="Resolution PR" v={detail.resolutionPr} />
+                        </div>
+                    </section>
+                    <section className="panel">
+                        <PanelTitle title="Transaction chain" />
+                        <div className="chain">
+                            {detail.evidence.map((r: string, i: number) => (
+                                <React.Fragment key={r}>
+                                    <button
+                                        className="recordNode"
+                                        onClick={() =>
+                                            alert(
+                                                'Record ' +
+                                                    r +
+                                                    ' opened in the Finance Record Viewer.',
+                                            )
+                                        }
+                                    >
+                                        {r}
+                                        <small>
+                                            {data.records.find((x: any) => x.id === r)?.kind ||
+                                                'Evidence'}
+                                        </small>
+                                    </button>
+                                    {i < detail.evidence.length - 1 && <ChevronRight />}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </section>
+                    <section className="panel">
+                        <PanelTitle
+                            title="Evidence register"
+                            action={
+                                <button
+                                    className="linkBtn"
+                                    onClick={() => (location.href = '/evidence')}
+                                >
+                                    Open register
+                                </button>
+                            }
+                        />
+                        <div className="evidenceRows">
+                            {detail.evidence.map((r: string) => (
+                                <div key={r}>
+                                    <FileText size={16} />
+                                    <b>{r}</b>
+                                    <span>
+                                        {data.records.find((x: any) => x.id === r)?.summary}
+                                    </span>
+                                    <Badge text="Sufficient" />
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                </div>
+                <aside className="rightCol">
+                    <section className="panel decision">
+                        <PanelTitle title="Next governed action" />
+                        <div className="decisionText">
+                            {detail.status === 'Open'
+                                ? 'Run the investigation to gather evidence and execute deterministic controls.'
+                                : detail.status === 'Investigation Running'
+                                  ? 'Review the generated evidence and create a Resolution PR.'
+                                  : detail.status === 'Awaiting Approval'
+                                    ? 'Explicit human approval is required before shadow application.'
+                                    : detail.status === 'Shadow Verification'
+                                      ? 'Shadow ledger is the only permitted execution boundary.'
+                                      : 'No further financial action is required.'}
+                        </div>
+                        {detail.status === 'Investigation Running' && (
+                            <button className="primary full" onClick={() => act('generate-pr')}>
+                                Generate Resolution PR
+                            </button>
+                        )}
+                        {detail.status === 'Awaiting Approval' && (
+                            <div className="buttonStack">
+                                <button className="primary full" onClick={() => act('approve')}>
+                                    <Check size={15} /> Approve PR
+                                </button>
+                                <button className="danger full" onClick={() => act('reject')}>
+                                    <X size={15} /> Reject / escalate
+                                </button>
+                                <button
+                                    className="secondary full"
+                                    onClick={() => act('request-evidence')}
+                                >
+                                    Request evidence
+                                </button>
+                            </div>
+                        )}
+                        {detail.status === 'Shadow Verification' && (
+                            <button className="primary full" onClick={() => act('shadow-apply')}>
+                                <ShieldCheck size={15} /> Run shadow verification
+                            </button>
+                        )}
+                        {detail.status === 'Verified' && (
+                            <button className="primary full" onClick={() => act('resolve')}>
+                                <Check size={15} /> Close verified case
+                            </button>
+                        )}
+                    </section>
+                    <section className="panel">
+                        <PanelTitle title="Policy checks" />
+                        {detail.policies.slice(0, 3).map((p: any) => (
+                            <div className="policyMini" key={p.id}>
+                                <div>
+                                    <b>{p.name}</b>
+                                    <small>{p.condition}</small>
+                                </div>
+                                <span className="pass">PASS</span>
+                            </div>
+                        ))}
+                    </section>
+                </aside>
+            </div>
+        </>
+    );
+}
+function Fact({ l, v }: { l: string; v: string }) {
+    return (
+        <div>
+            <small>{l}</small>
+            <b>{v}</b>
+        </div>
+    );
+}
+function Runs() {
+    const { data } = useData();
+    if (!data) return <Loading />;
+    return (
+        <>
+            <PageHead
+                title="Investigation runs"
+                desc="Every investigation is a visible, replayable sequence of governed steps."
+            />
+            <div className="runGrid">
+                {data.exceptions.map((e: Exception) => (
+                    <div className="panel runCard" key={e.id}>
+                        <div className="runTop">
+                            <b>{e.id}</b>
+                            <Badge text={e.status} />
+                        </div>
+                        <h3>{e.vendor}</h3>
+                        <div className="steps">
+                            <span className="done">1 Plan</span>
+                            <span className="done">2 Gather</span>
+                            <span className={e.status === 'Open' ? 'current' : 'done'}>
+                                3 Prove
+                            </span>
+                            <span>4 Validate</span>
+                            <span>5 Approve</span>
+                            <span>6 Shadow</span>
+                        </div>
+                        <div className="runButtons">
+                            <button
+                                className="secondary"
+                                onClick={() => (location.href = '/exceptions/' + e.id)}
+                            >
+                                Open run
+                            </button>
+                            <button
+                                className="secondary"
+                                onClick={async () => {
+                                    await fetch(API + '/actions', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            action: 'defend',
+                                            exceptionId: e.id,
+                                        }),
+                                    });
+                                    alert(
+                                        'Defence test passed: source instruction ignored and logged.',
+                                    );
+                                }}
+                            >
+                                Defend test
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </>
+    );
+}
+function Evidence() {
+    const { data } = useData();
+    if (!data) return <Loading />;
+    return (
+        <>
+            <PageHead
+                title="Evidence register"
+                desc="Traceable source evidence behind every exception conclusion."
+            />
+            <section className="panel">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>RECORD</th>
+                            <th>TYPE</th>
+                            <th>VENDOR</th>
+                            <th>STATUS</th>
+                            <th>SUMMARY</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.records.map((r: any) => (
+                            <tr key={r.id}>
+                                <td>
+                                    <b>{r.id}</b>
+                                </td>
+                                <td>{r.kind}</td>
+                                <td>{r.vendor}</td>
+                                <td>
+                                    <Badge text={r.status} />
+                                </td>
+                                <td>{r.summary}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </section>
+        </>
+    );
+}
+function Catalog({ kind }: { kind: string }) {
+    const { data } = useData();
+    if (!data) return <Loading />;
+    const title =
+        kind === 'records'
+            ? 'Finance records'
+            : kind === 'policies'
+              ? 'Policy controls'
+              : kind === 'skills'
+                ? 'Exception skills'
+                : 'Tool registry';
+    const desc =
+        kind === 'records'
+            ? 'Invoices, payments, POs, GRNs, contracts and approvals used by investigations.'
+            : kind === 'policies'
+              ? 'Deterministic rules that decide what the agent may recommend or execute.'
+              : kind === 'skills'
+                ? 'Versioned exception procedures with evidence requirements and tests.'
+                : 'Bounded connectors and tools available to the governed runtime.';
+    return (
+        <>
+            <PageHead title={title} desc={desc} />
+            <section className="panel">
+                {kind === 'skills' && (
+                    <div className="skillBanner">
+                        <div>
+                            <b>Skill Compiler</b>
+                            <span>
+                                Recurring reviewed exceptions can be converted into a typed,
+                                testable draft. Human review is required before enablement.
+                            </span>
+                        </div>
+                        <button
+                            className="primary"
+                            onClick={async () => {
+                                const e = data.exceptions.find(
+                                    (x: any) => x.type === 'Invoice vs PO / GRN',
+                                );
+                                await fetch(API + '/actions', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        action: 'compile-skill',
+                                        exceptionId: e?.id,
+                                    }),
+                                });
+                                alert('Skill draft created and audit event recorded.');
+                            }}
+                        >
+                            Draft skill from pattern
+                        </button>
+                    </div>
+                )}
+                {kind === 'records' ? (
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>KIND</th>
+                                <th>VENDOR</th>
+                                <th>AMOUNT</th>
+                                <th>STATUS</th>
+                                <th>DATE</th>
+                                <th>SUMMARY</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.records.map((r: any) => (
+                                <tr key={r.id}>
+                                    <td>
+                                        <b>{r.id}</b>
+                                    </td>
+                                    <td>{r.kind}</td>
+                                    <td>{r.vendor}</td>
+                                    <td className="amount">{r.amount ? money(r.amount) : '—'}</td>
+                                    <td>
+                                        <Badge text={r.status} />
+                                    </td>
+                                    <td>{r.date}</td>
+                                    <td>{r.summary}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : kind === 'policies' ? (
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>POLICY</th>
+                                <th>CONDITION</th>
+                                <th>APPROVAL</th>
+                                <th>RISK</th>
+                                <th>VERSION</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.policies.map((p: any) => (
+                                <tr key={p.id}>
+                                    <td>
+                                        <b>{p.name}</b>
+                                        <small>{p.id}</small>
+                                    </td>
+                                    <td>{p.condition}</td>
+                                    <td>{p.approval}</td>
+                                    <td>
+                                        <Badge text={p.risk} />
+                                    </td>
+                                    <td>{p.version}</td>
+                                    <td>
+                                        <Badge text={p.status} />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : kind === 'skills' ? (
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKILL</th>
+                                <th>TYPE</th>
+                                <th>VERSION</th>
+                                <th>REQUIRED EVIDENCE</th>
+                                <th>SUCCESSFUL CASES</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.skills.map((s: any) => (
+                                <tr key={s.id}>
+                                    <td>
+                                        <b>{s.name}</b>
+                                        <small>{s.id}</small>
+                                    </td>
+                                    <td>{s.type}</td>
+                                    <td>{s.version}</td>
+                                    <td>{s.required}</td>
+                                    <td>{s.success}</td>
+                                    <td>
+                                        <Badge text={s.status} />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>TOOL</th>
+                                <th>SYSTEM</th>
+                                <th>TYPE</th>
+                                <th>ACCESS</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.tools.map((t: any) => (
+                                <tr key={t.id}>
+                                    <td>
+                                        <b>{t.name}</b>
+                                        <small>{t.id}</small>
+                                    </td>
+                                    <td>{t.system}</td>
+                                    <td>{t.type}</td>
+                                    <td>{t.access}</td>
+                                    <td>
+                                        <Badge text={t.status} />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </section>
+        </>
+    );
+}
+function PRs() {
+    const { data } = useData();
+    if (!data) return <Loading />;
+    return (
+        <>
+            <PageHead
+                title="Resolution PRs"
+                desc="Diffable, evidence-backed financial decisions awaiting controlled action."
+            />
+            <section className="panel">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>PR</th>
+                            <th>CASE</th>
+                            <th>ROOT CAUSE</th>
+                            <th>FINANCIAL IMPACT</th>
+                            <th>POLICY</th>
+                            <th>REQUIRED ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.exceptions.map((e: Exception) => (
+                            <tr
+                                key={e.resolutionPr}
+                                onClick={() => (location.href = '/exceptions/' + e.id)}
+                            >
+                                <td>
+                                    <b>{e.resolutionPr}</b>
+                                </td>
+                                <td>{e.id}</td>
+                                <td>{e.rootCause}</td>
+                                <td className="amount">{money(e.amount)}</td>
+                                <td>
+                                    <Badge text="Policy checked" />
+                                </td>
+                                <td>
+                                    {e.status === 'Awaiting Approval'
+                                        ? 'Approve / Reject'
+                                        : e.status === 'Shadow Verification'
+                                          ? 'Shadow verify'
+                                          : 'Investigate'}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </section>
+        </>
+    );
+}
+function Shadow() {
+    const { data } = useData();
+    if (!data) return <Loading />;
+    return (
+        <>
+            <PageHead
+                title="Shadow ledger"
+                desc="Pre-flight every approved change before any permitted connector write."
+            />
+            <div className="metrics">
+                <Metric
+                    label="Pending shadow runs"
+                    value={
+                        data.exceptions.filter((e: Exception) => e.status === 'Shadow Verification')
+                            .length
+                    }
+                />
+                <Metric label="Policy checks" value={4} />
+                <Metric label="Duplicate actions" value={0} />
+                <Metric label="Live writes" value={0} />
+            </div>
+            <section className="panel">
+                <PanelTitle title="Verification controls" />
+                <div className="controlList">
+                    <Control ok label="Expected vs actual balance" />
+                    <Control ok label="Policy satisfied" />
+                    <Control ok label="No duplicate financial action" />
+                    <Control ok label="Idempotency check" />
+                    <Control ok label="Connector boundary enforced" />
+                </div>
+            </section>
+        </>
+    );
+}
+function Verification() {
+    const { data } = useData();
+    if (!data) return <Loading />;
+    return (
+        <>
+            <PageHead
+                title="Verification"
+                desc="Outcome verification after shadow application; unresolved mismatches return to escalation."
+            />
+            <section className="panel">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>CASE</th>
+                            <th>RESULT</th>
+                            <th>LEDGER STATE</th>
+                            <th>VERIFICATION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.exceptions.map((e: Exception) => (
+                            <tr key={e.id}>
+                                <td>
+                                    <b>{e.id}</b>
+                                    <small>{e.vendor}</small>
+                                </td>
+                                <td>
+                                    <Badge
+                                        text={
+                                            e.status === 'Verified' || e.status === 'Resolved'
+                                                ? 'PASS'
+                                                : 'PENDING'
+                                        }
+                                    />
+                                </td>
+                                <td>
+                                    {e.status === 'Verified' || e.status === 'Resolved'
+                                        ? 'Shadow result matches expected state'
+                                        : 'Awaiting governed action'}
+                                </td>
+                                <td>
+                                    {e.status === 'Verified' || e.status === 'Resolved'
+                                        ? 'Verified'
+                                        : 'Not run'}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </section>
+        </>
+    );
+}
+function Audit() {
+    const { data } = useData();
+    if (!data) return <Loading />;
+    return (
+        <>
+            <PageHead
+                title="Audit trail"
+                desc="Immutable-style event history for investigation, approvals, policy gates and shadow verification."
+            />
+            <section className="panel">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TIMESTAMP</th>
+                            <th>ACTOR</th>
+                            <th>EVENT</th>
+                            <th>DETAIL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.audit.map((a: any) => (
+                            <tr key={a.id}>
+                                <td>{new Date(a.timestamp).toLocaleString()}</td>
+                                <td>{a.actor}</td>
+                                <td>
+                                    <b>{a.event}</b>
+                                </td>
+                                <td>{a.detail}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </section>
+        </>
+    );
+}
+function Loading() {
+    return (
+        <div className="loading">
+            <RefreshCw className="spin" /> Loading workspace…
+        </div>
+    );
+}
+createRoot(document.getElementById('root')!).render(
+    <BrowserRouter>
+        <App />
+    </BrowserRouter>,
+);
